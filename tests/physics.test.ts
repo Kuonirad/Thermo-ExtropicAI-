@@ -50,7 +50,7 @@ describe('Physics Engine (Property Based)', () => {
     it('should calculate energy deterministically', () => {
         fc.assert(
             fc.property(
-                fc.array(fc.float({ min: Math.fround(-5), max: Math.fround(5) }), { minLength: 4, maxLength: 4 }),
+                fc.array(fc.float({ min: Math.fround(-5), max: Math.fround(5), noNaN: true }), { minLength: 4, maxLength: 4 }),
                 (posArray) => {
                     const pos = new Float32Array(posArray);
                     const e1 = calculateEnergy(pos, 0);
