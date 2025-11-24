@@ -1,0 +1,10 @@
+# Code Governance
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything
+* @Kuonirad
+
+# Security critical files require explicit security review
+.github/workflows/ @Kuonirad
+SECURITY.md @Kuonirad
+flake.nix @Kuonirad

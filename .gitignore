@@ -1,0 +1,31 @@
+# Compiled Dependencies (Strict Exclusion for OpenSSF Scorecard)
+*.dll
+*.exe
+*.so
+*.o
+*.a
+*.dylib
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs and Databases
+*.log
+*.sqlite
+
+# OS Generated
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+.env

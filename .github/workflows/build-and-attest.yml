@@ -1,0 +1,57 @@
+name: SLSA Level 3 Build & Attest
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.digest.outputs.digest }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout Code
+        uses: actions/checkout@b4ffde65f4633668828d0b93fc279453eed0a8f1 # v4.1.1
+        with:
+          persist-credentials: false
+
+      - name: Install Nix (Hermetic Environment)
+        uses: cachix/install-nix-action@8887e59634c54325c52a1b1842e3d36b856a4220 # v26
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Build Artifacts
+        run: nix develop --command npm ci && nix develop --command npm run build
+
+      - name: Generate Artifact Digest
+        id: digest
+        run: |
+          sha256sum dist/index.html > artifact.sha256
+          echo "digest=$(cat artifact.sha256 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        with:
+          name: tnn-build-artifact
+          path: dist/index.html
+          if-no-files-found: error
+
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.9.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.digest }} dist/index.html"
+      upload-assets: true
