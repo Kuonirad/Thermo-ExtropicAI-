@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TNN-Δ₀ • Thermodynamic Native Network • Criticality Engine</title>
+    <meta name="description" content="4D Rastrigin Optimization Simulation utilizing Thermodynamic Native Agents (TNA) and Criticality Analysis.">
+
+    <!--
+        THERMODYNAMIC NATIVE NETWORK (TNN) - EXTROPIC EDITION
+        -----------------------------------------------------
+        Architecture: Polymathic Synthesis (Biophysics + Glaciology + Thermodynamics)
+        Core Logic: Langevin Dynamics on 4D Hyper-Surface
+        Objective: Detect 'Edge of Chaos' Criticality via Power-Law Exponents (Alpha)
+
+        Theory References:
+        1. Extropic AI: Thermodynamic Sampling Units (TSU)
+        2. Manus AI Report (Nov 2025): Negative Alpha Plateaus in High-Entropy Regimes
+        3. Glaciology Metaphor: Basal Sliding (Plateau) vs. Bedrock Carving (Convergence)
+    -->
+
+    <!-- Module Imports via Import Map for Stability -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.1/examples/jsm/"
+            }
+        }
+    </script>
+
+    <!-- Tailwind & Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Deep Space UI Theme */
+        body { margin: 0; overflow: hidden; background: #020617; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+
+        #canvas-container {
+            width: 100vw; height: 65vh; position: relative;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
+        }
+
+        #dashboard {
+            height: 35vh; display: grid; grid-template-columns: 400px 1fr 1fr; gap: 1rem; padding: 1rem;
+            background: #020617; border-top: 1px solid #312e81;
+            box-shadow: 0 -10px 20px rgba(0,0,0,0.5);
+        }
+
+        .panel {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 1rem; border-radius: 0.75rem;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+            display: flex; flex-direction: column;
+        }
+
+        h2 {
+            font-size: 0.9rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+            color: #818cf8; margin-bottom: 1rem; display: flex; justify-content: space-between;
+        }
+
+        .val { font-family: 'JetBrains Mono', monospace; color: #38bdf8; }
+
+        /* Interactive Elements */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent; margin: 10px 0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
+            background: #c084fc; cursor: pointer; margin-top: -5px;
+            box-shadow: 0 0 10px #c084fc;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px;
+        }
+
+        button {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        button:active { transform: translateY(0); }
+
+        /* Status Indicators */
+        .status-plateau { color: #f87171; text-shadow: 0 0 8px rgba(248, 113, 113, 0.4); }
+        .status-converge { color: #4ade80; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }
+        .status-critical { color: #f0abfc; text-shadow: 0 0 12px rgba(240, 171, 252, 0.6); animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container">
+    <!-- Overlay UI -->
+    <div class="absolute top-4 left-4 z-10 pointer-events-none">
+        <div class="text-xs font-bold text-indigo-400 tracking-widest">TNN-Δ₀ SYSTEM</div>
+        <div class="text-[10px] text-gray-500 font-mono mt-1">TSU EMULATION: ACTIVE</div>
+        <div class="text-[10px] text-gray-500 font-mono">TOPOLOGY: 4D RASTRIGIN</div>
+    </div>
+    <div id="vr-button" class="absolute bottom-4 right-4 z-10"></div>
+</div>
+
+<div id="dashboard">
+    <!-- CONTROLS -->
+    <div class="panel overflow-y-auto">
+        <h2>
+            <span>Control Deck</span>
+            <span class="text-[10px] bg-indigo-900/50 px-2 py-1 rounded text-indigo-300">v3.0.2 (FIXED)</span>
+        </h2>
+
+        <div class="space-y-5">
+            <!-- Temp Slider -->
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-400">Thermodynamic Noise (T)</span>
+                    <span id="temp-val" class="val">20.0</span>
+                </div>
+                <input type="range" id="temp-slider" min="0.1" max="150" step="0.1" value="20">
+                <div class="flex justify-between text-[9px] text-gray-600 uppercase font-bold tracking-wider">
+                    <span>Crystalline (Low T)</span>
+                    <span>Plasma (High T)</span>
+                </div>
+            </div>
+
+            <!-- Agent Slider -->
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-400">Swarm Population</span>
+                    <span id="batch-val" class="val">1000</span>
+                </div>
+                <input type="range" id="batch-slider" min="100" max="5000" step="100" value="1000">
+            </div>
+
+            <!-- Modes -->
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[9px] text-gray-500 uppercase mb-1">Annealing Schedule</label>
+                    <select id="anneal-select" class="w-full bg-slate-900 border border-slate-700 text-xs text-gray-300 rounded p-1 outline-none focus:border-indigo-500">
+                        <option value="logarithmic" selected>Logarithmic (Optimal)</option>
+                        <option value="glacial">Glacial Cycle (Oscillating)</option>
+                        <option value="none">Isothermal (Constant T)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] text-gray-500 uppercase mb-1">Physics Engine</label>
+                    <select id="method-select" class="w-full bg-slate-900 border border-slate-700 text-xs text-gray-300 rounded p-1 outline-none focus:border-indigo-500">
+                        <option value="langevin">Langevin (Analog TSU)</option>
+                        <option value="noisy_gd">Noisy GD (Digital)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 pt-2">
+                <button onclick="startSimulation()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded shadow-lg shadow-indigo-900/20">Ignite Swarm</button>
+                <button onclick="resetSimulation()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded">Reset</button>
+                <button onclick="exportState()" class="px-3 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded border border-slate-600" title="Export Data">⇩</button>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-slate-800 pt-2 text-[10px] font-mono">
+                <span class="text-gray-500">STATUS: <span id="sim-status" class="text-yellow-500">STANDBY</span></span>
+                <span class="text-gray-500">STEP: <span id="step-count" class="text-white">0</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIAGNOSTICS -->
+    <div class="panel">
+        <h2>System Diagnostics</h2>
+
+        <div class="grid grid-cols-2 gap-4 text-xs mb-4">
+            <div class="bg-slate-900/50 p-2 rounded border border-slate-800">
+                <div class="text-gray-500 mb-1">Mean Energy (Loss)</div>
+                <div id="avg-energy" class="text-lg font-mono text-white">--</div>
+            </div>
+            <div class="bg-slate-900/50 p-2 rounded border border-slate-800">
+                <div class="text-gray-500 mb-1">Global Min Detected</div>
+                <div id="min-energy" class="text-lg font-mono text-emerald-400">--</div>
+            </div>
+        </div>
+
+        <div class="mb-auto">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-gray-400">Convergence Alpha (α)</span>
+                <span id="alpha-val" class="text-sm font-mono font-bold text-gray-200">--</span>
+            </div>
+            <!-- Alpha Meter -->
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden relative">
+                <div id="alpha-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 absolute transition-all duration-500" style="width: 0%; left: 50%"></div>
+                <!-- Center Marker -->
+                <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20"></div>
+            </div>
+            <div class="flex justify-between text-[9px] text-gray-600 mt-1 font-mono">
+                <span>PLATEAU (Neg)</span>
+                <span>CONVERGENCE (Pos)</span>
+            </div>
+        </div>
+
+        <div class="mt-3 p-3 bg-slate-900 rounded border border-indigo-900/30 shadow-inner">
+            <div class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Glaciology Analysis</div>
+            <div id="analysis-text" class="text-xs text-gray-300 leading-relaxed">
+                System awaiting thermal ignition. <br>
+                <span class="text-gray-600">Target: Criticality Phase Transition.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELEMETRY -->
+    <div class="panel">
+        <canvas id="energyChart"></canvas>
+    </div>
+</div>
+
+<!-- ENGINE CORE -->
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { VRButton } from 'three/addons/webxr/VRButton.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+    // --- 1. THEORETICAL CONSTANTS ---
+    const CONFIG = {
+        dt: 0.002,              // Integration Step
+        dim: 4,                 // Dimensions (Rastrigin 4D)
+        bounds: 5.12,           // Domain Bounds
+        maxSteps: 50000,        // Simulation Horizon
+        logInterval: 20         // Telemetry Rate
+    };
+
+    // --- 2. STATE MANAGEMENT ---
+    let state = {
+        running: false,
+        step: 0,
+        agents: [],
+        energies: [],           // History for Alpha Calc
+        initialTemp: 20,
+        currentTemp: 20,
+        annealing: 'logarithmic',
+        method: 'langevin'
+    };
+
+    // --- 3. PHYSICS ENGINE (Langevin & Rastrigin) ---
+
+    const A = 10;
+    // Rastrigin Function: Non-convex, multimodal landscape
+    const energyFunc = (pos) => {
+        let sum = 0;
+        for (let i = 0; i < CONFIG.dim; i++) sum += (pos[i]**2 - A * Math.cos(2 * Math.PI * pos[i]));
+        return A * CONFIG.dim + sum;
+    };
+
+    // Gradient of Rastrigin
+    const gradFunc = (pos) => {
+        const g = new Float32Array(CONFIG.dim);
+        for (let i = 0; i < CONFIG.dim; i++) g[i] = 2 * pos[i] + 2 * Math.PI * A * Math.sin(2 * Math.PI * pos[i]);
+        return g;
+    };
+
+    // Gaussian Noise (Box-Muller)
+    const randn = () => {
+        let u = 0, v = 0;
+        while(u === 0) u = Math.random();
+        while(v === 0) v = Math.random();
+        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    };
+
+    // --- 4. VISUALIZATION CORE (Three.js) ---
+
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020617);
+    scene.fog = new THREE.FogExp2(0x020617, 0.025);
+
+    const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(14, 12, 14);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.xr.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    // Post-Processing: Bloom for "Thermodynamic Heat" visualization
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    // Threshold, Strength, Radius
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(container.clientWidth, container.clientHeight), 1.5, 0.5, 0.1);
+    composer.addPass(bloomPass);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.8;
+
+    document.getElementById('vr-button').appendChild(VRButton.createButton(renderer));
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0x1e1b4b, 2.0));
+    const dirLight = new THREE.DirectionalLight(0x818cf8, 3);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    // Procedural Terrain (Visualizing 2D slice of 4D)
+    // We map x=X, z=Y, y=Energy
+    const terrainGeo = new THREE.PlaneGeometry(16, 16, 128, 128);
+    const posAttr = terrainGeo.attributes.position;
+    for(let i=0; i < posAttr.count; i++){
+        const x = posAttr.getX(i);
+        const y = posAttr.getY(i);
+        // Z-up in geometry, but we rotate mesh later. Height is function of X/Y
+        const z = (20 + (x**2 - 10*Math.cos(2*Math.PI*x)) + (y**2 - 10*Math.cos(2*Math.PI*y))) * 0.1;
+        posAttr.setZ(i, z);
+    }
+    terrainGeo.computeVertexNormals();
+
+    const terrainMat = new THREE.MeshStandardMaterial({
+        color: 0x0f172a, emissive: 0x312e81, emissiveIntensity: 0.4,
+        metalness: 0.8, roughness: 0.2, wireframe: true
+    });
+    const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+    terrain.rotation.x = -Math.PI / 2;
+    scene.add(terrain);
+
+    // GPU Particle System
+    let particleSystem, particleGeo;
+    function initParticles(count) {
+        if (particleSystem) scene.remove(particleSystem);
+
+        particleGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+
+        for(let i=0; i<count; i++) {
+            positions[i*3]=0; positions[i*3+1]=10; positions[i*3+2]=0;
+            colors[i*3]=1; colors[i*3+1]=1; colors[i*3+2]=1;
+        }
+
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png');
+        const mat = new THREE.PointsMaterial({
+            size: 0.4, map: sprite, vertexColors: true,
+            blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.9
+        });
+
+        particleSystem = new THREE.Points(particleGeo, mat);
+        scene.add(particleSystem);
+    }
+
+    // 4D -> 3D Projection (Parallel with W-displacement)
+    function project4D(pos) {
+        const E = energyFunc(pos);
+        const w = pos[3];
+        // Parallax effect from W dimension
+        return {
+            x: pos[0] + w * 0.2,
+            y: E * 0.1 + 0.2, // Scale energy to visual height
+            z: pos[1] - w * 0.2
+        };
+    }
+
+    // --- 5. SIMULATION LOOP ---
+
+    function initSimulation() {
+        const count = parseInt(document.getElementById('batch-slider').value);
+
+        // Init Agents
+        state.agents = [];
+        for(let i=0; i<count; i++){
+            state.agents.push({
+                pos: Array(4).fill(0).map(() => (Math.random() * 10.24) - 5.12),
+                energy: 0
+            });
+        }
+
+        state.energies = [];
+        state.step = 0;
+        state.currentTemp = parseFloat(document.getElementById('temp-slider').value);
+        state.initialTemp = state.currentTemp;
+        state.annealing = document.getElementById('anneal-select').value;
+        state.method = document.getElementById('method-select').value;
+
+        initParticles(count);
+
+        // Safe Chart Initialization Check
+        if (chartInstance) {
+            chartInstance.data.labels = [];
+            chartInstance.data.datasets[0].data = [];
+            chartInstance.update();
+        }
+    }
+
+    function stepSimulation() {
+        if (!state.running) return;
+
+        // A. Annealing Logic
+        if (state.annealing === 'linear') {
+            state.currentTemp = Math.max(0.01, state.initialTemp * (1 - state.step / CONFIG.maxSteps));
+        } else if (state.annealing === 'logarithmic') {
+            state.currentTemp = state.initialTemp / Math.log(state.step + 5);
+        } else if (state.annealing === 'glacial') {
+            // Oscillating "Seasonal" cycle for re-melting plateaus
+            const cycle = Math.sin(state.step / 2000);
+            state.currentTemp = state.initialTemp * (0.5 + 0.5*cycle) + 0.1;
+        }
+
+        // B. Physics Integration
+        let totalE = 0, minE = Infinity;
+        const sqDT = Math.sqrt(2 * state.currentTemp * CONFIG.dt); // Langevin Noise
+        const gdNoise = Math.sqrt(2 * 20.0 * CONFIG.dt); // Reference Digital Noise
+
+        state.agents.forEach(agent => {
+            const grad = gradFunc(agent.pos);
+
+            for(let i=0; i<CONFIG.dim; i++){
+                const noise = randn();
+                let step = 0;
+
+                if(state.method === 'langevin'){
+                    // dx = -grad*dt + sqrt(2T)*dW
+                    step = -(grad[i] * CONFIG.dt) + (sqDT * noise);
+                } else {
+                    // Noisy GD Digital Approx
+                    step = -(CONFIG.dt * grad[i]) + (gdNoise * noise);
+                }
+
+                agent.pos[i] += step;
+
+                // Hard Bounds (Reflective)
+                if(agent.pos[i] > CONFIG.bounds) agent.pos[i] = CONFIG.bounds;
+                if(agent.pos[i] < -CONFIG.bounds) agent.pos[i] = -CONFIG.bounds;
+            }
+
+            agent.energy = energyFunc(agent.pos);
+            totalE += agent.energy;
+            if(agent.energy < minE) minE = agent.energy;
+        });
+
+        const avgE = totalE / state.agents.length;
+        state.energies.push(avgE);
+
+        // C. Update Visuals
+        const positions = particleGeo.attributes.position.array;
+        const colors = particleGeo.attributes.color.array;
+        const colorHot = new THREE.Color(0xf0abfc); // Critical/Pink
+        const colorCold = new THREE.Color(0x4f46e5); // Stuck/Blue
+        const colorConv = new THREE.Color(0x4ade80); // Solved/Green
+
+        state.agents.forEach((agent, i) => {
+            const p3 = project4D(agent.pos);
+            positions[i*3] = p3.x; positions[i*3+1] = p3.y; positions[i*3+2] = p3.z;
+
+            // Color logic:
+            // Low Energy = Green (Success)
+            // High Energy + High Temp = Pink (Active Plasma)
+            // High Energy + Low Temp = Blue (Frozen/Trapped)
+
+            let c = new THREE.Color();
+            const normE = Math.min(agent.energy / 80, 1);
+
+            if(normE < 0.1) c.copy(colorConv);
+            else {
+                // Interpolate based on Temperature
+                const tempFactor = Math.min(state.currentTemp / 50, 1);
+                c.lerpColors(colorCold, colorHot, tempFactor);
+            }
+
+            colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+        });
+
+        particleGeo.attributes.position.needsUpdate = true;
+        particleGeo.attributes.color.needsUpdate = true;
+
+        // D. Telemetry Update
+        if(state.step % CONFIG.logInterval === 0) {
+            updateDiagnostics(avgE, minE);
+            updateChart(state.step, avgE);
+        }
+
+        state.step++;
+        if(state.step < CONFIG.maxSteps) requestAnimationFrame(stepSimulation);
+        else {
+            state.running = false;
+            document.getElementById('sim-status').textContent = "COMPLETE";
+        }
+    }
+
+    // --- 6. ANALYSIS & METRICS ---
+
+    function calculateAlpha() {
+        if(state.energies.length < 100) return 0;
+        // Calculate slope of log-log plot for last 100 steps
+        const slice = state.energies.slice(-100);
+        const logE = slice.map(e => Math.log(Math.max(e, 0.001)));
+        const logT = Array.from({length:100}, (_,i) => Math.log(state.step - 100 + i + 1));
+
+        const n = 100;
+        const sumT = logT.reduce((a,b)=>a+b, 0);
+        const sumE = logE.reduce((a,b)=>a+b, 0);
+        const sumTE = logT.reduce((a,b,i)=>a + b*logE[i], 0);
+        const sumTT = logT.reduce((a,b)=>a + b*b, 0);
+
+        return -((n*sumTE - sumT*sumE) / (n*sumTT - sumT*sumT));
+    }
+
+    function updateDiagnostics(avgE, minE) {
+        document.getElementById('avg-energy').textContent = avgE.toFixed(2);
+        document.getElementById('min-energy').textContent = minE.toFixed(2);
+        document.getElementById('step-count').textContent = state.step;
+
+        const alpha = calculateAlpha();
+        document.getElementById('alpha-val').textContent = alpha.toFixed(4);
+
+        const bar = document.getElementById('alpha-bar');
+        const analysis = document.getElementById('analysis-text');
+        const alphaEl = document.getElementById('alpha-val');
+
+        // Visual Bar Logic (-0.1 to 0.3 range mapping)
+        let pct = 50 + (alpha * 200);
+        pct = Math.max(0, Math.min(100, pct));
+
+        bar.style.width = Math.abs(alpha * 200) + "%";
+        bar.style.left = alpha >= 0 ? "50%" : (50 - Math.abs(alpha * 200)) + "%";
+
+        // Glaciology/Criticality Interpretation
+        if (alpha < -0.01) {
+            bar.className = "h-full absolute transition-all duration-500 bg-rose-500";
+            alphaEl.className = "text-sm font-mono font-bold status-plateau";
+            analysis.innerHTML = `<span class="text-rose-400 font-bold">BASAL SLIDING DETECTED (α < 0)</span><br>System has de-coupled from the landscape (Quasi-Equilibrium). Swarm is 'hydroplaning' on noise. <br>Recommendation: <span class="text-white">Initiate Glacial Freeze (Lower T).</span>`;
+        } else if (alpha > 0.08) {
+            bar.className = "h-full absolute transition-all duration-500 bg-emerald-500";
+            alphaEl.className = "text-sm font-mono font-bold status-converge";
+            analysis.innerHTML = `<span class="text-emerald-400 font-bold">BEDROCK CARVING (α > 0.08)</span><br>Strong power-law convergence. System is effectively dissipating entropy and exploiting gradients.`;
+        } else {
+            bar.className = "h-full absolute transition-all duration-500 bg-yellow-500";
+            alphaEl.className = "text-sm font-mono font-bold text-yellow-400";
+            analysis.innerHTML = `<span class="text-yellow-400">CRITICALITY PHASE</span><br>System approaching the 'Edge of Chaos'. <br>Searching for percolation threshold...`;
+        }
+    }
+
+    // --- 7. PLOTTING (Chart.js) ---
+    let chartInstance; // Renamed variable to avoid conflict with canvas ID
+    function initChart() {
+        const ctx = document.getElementById('energyChart').getContext('2d');
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = 'JetBrains Mono';
+
+        // Safety: destroy previous instance if exists
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'System Entropy (Energy)',
+                    data: [],
+                    borderColor: '#818cf8',
+                    backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                    borderWidth: 1,
+                    fill: true,
+                    pointRadius: 0,
+                    tension: 0.2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: {
+                        type: 'logarithmic',
+                        grid: { color: '#1e293b' },
+                        ticks: { callback: (val) => Number(val).toString() }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateChart(step, val) {
+        if (!chartInstance) return;
+        chartInstance.data.labels.push(step);
+        chartInstance.data.datasets[0].data.push(val);
+        if(chartInstance.data.labels.length > 500) {
+            chartInstance.data.labels.shift();
+            chartInstance.data.datasets[0].data.shift();
+        }
+        chartInstance.update();
+    }
+
+    // --- 8. GLOBAL HOOKS ---
+    window.startSimulation = () => {
+        if(state.running) return;
+        state.running = true;
+        document.getElementById('sim-status').textContent = "IGNITED";
+        document.getElementById('sim-status').className = "text-indigo-400 font-bold animate-pulse";
+        if(state.step === 0) initSimulation();
+        stepSimulation();
+    };
+
+    window.resetSimulation = () => {
+        state.running = false;
+        state.step = 0;
+        document.getElementById('sim-status').textContent = "STANDBY";
+        document.getElementById('sim-status').className = "text-yellow-500";
+        initSimulation();
+    };
+
+    window.exportState = () => {
+        const data = {
+            timestamp: new Date().toISOString(),
+            config: CONFIG,
+            state: {
+                steps: state.step,
+                alpha: document.getElementById('alpha-val').textContent,
+                temp: state.currentTemp
+            },
+            data: state.energies
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `tnn_criticality_dump_${Date.now()}.json`;
+        a.click();
+    };
+
+    // Listeners
+    document.getElementById('temp-slider').addEventListener('input', e => {
+        document.getElementById('temp-val').textContent = parseFloat(e.target.value).toFixed(1);
+        if(!state.running) state.initialTemp = parseFloat(e.target.value);
+    });
+    document.getElementById('batch-slider').addEventListener('input', e => {
+        document.getElementById('batch-val').textContent = e.target.value;
+    });
+    window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        composer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // --- 9. MAIN LOOP ---
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        composer.render();
+    }
+
+    initChart();
+    initSimulation();
+    animate();
+
+</script>
+</body>
+</html>
