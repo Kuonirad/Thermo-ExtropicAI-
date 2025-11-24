@@ -1,0 +1,33 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "e/acc",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kuonirad/Thermo-ExtropicAI-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Kuonirad/Thermo-ExtropicAI-/issues"
+  },
+  "homepage": "https://github.com/Kuonirad/Thermo-ExtropicAI-#readme",
+  "devDependencies": {
+    "@types/three": "^0.181.0",
+    "fast-check": "^4.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4",
+    "vite-plugin-singlefile": "^2.3.0",
+    "vitest": "^4.0.13"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "three": "^0.181.2"
+  }
+}
